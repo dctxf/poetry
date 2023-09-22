@@ -1,4 +1,10 @@
 import {
+  ModalForm,
+  ProColumnType,
+  ProFormText,
+  ProTable,
+} from '@ant-design/pro-components';
+import {
   Button,
   Card,
   Col,
@@ -8,9 +14,7 @@ import {
   Row,
   Space,
   Statistic,
-  Table,
 } from 'antd';
-import { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 
 // 交易费率
@@ -61,10 +65,14 @@ export const TradingSimulator = () => {
       currentPrice: 100,
       profit: 100,
       profitRate: 100,
+      price: 100,
     },
   ]);
 
-  const columns: ColumnsType<Stock.Info> = [
+  // 股票模态框
+  const [stockVisible, setStockVisible] = useState(false);
+
+  const columns: ProColumnType<Stock.Info>[] = [
     {
       title: '股票名称',
       dataIndex: 'name',
@@ -158,8 +166,32 @@ export const TradingSimulator = () => {
             </Col>
           </Row>
         </Card>
-
-        <Table<Stock.Info> dataSource={stockList} columns={columns}></Table>
+        <ProTable<Stock.Info>
+          rowKey='code'
+          headerTitle='List of stocks'
+          toolBarRender={() => [
+            <Button
+              type='primary'
+              onClick={() => {
+                setStockVisible(true);
+              }}
+            >
+              Add Stock
+            </Button>,
+          ]}
+          dataSource={stockList}
+          columns={columns}
+        ></ProTable>
+        <ModalForm
+          open={stockVisible}
+          onOpenChange={setStockVisible}
+          title='Stock info'
+        >
+          <ProFormText label='股票代码'></ProFormText>
+          <ProFormText label='股票名称'></ProFormText>
+          <ProFormText label='股票数量'></ProFormText>
+          <ProFormText label='股票价格'></ProFormText>
+        </ModalForm>
       </Space>
     </div>
   );
