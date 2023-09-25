@@ -29,6 +29,7 @@ export const TradingSimulator = () => {
   };
   // 卖出股票按钮点击
   const sellStockHandler = (stock: Stock.Info) => {
+    setBuyVisible(true);
     buyForm.setFieldsValue({
       ...stock,
       isBuy: false,
@@ -61,8 +62,8 @@ export const TradingSimulator = () => {
       render: (_, record) => {
         return (
           <Space direction='vertical'>
-            <span>{record.cost}</span>
-            <span>{record.currentPrice}</span>
+            <span>{record.price}</span>
+            <span>{record.price}</span>
           </Space>
         );
       },
@@ -146,10 +147,6 @@ export const TradingSimulator = () => {
                 buyStockHandler({
                   name: '腾讯控股',
                   code: '00700',
-                  cost: 0,
-                  currentPrice: 0,
-                  profit: 0,
-                  profitRate: 0,
                   price: 0,
                   quantity: 0,
                 });

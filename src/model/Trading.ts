@@ -12,12 +12,14 @@ export const TRANSFER_FEE_RATE = 0.00001;
 export const MIN_TRADING_QUANTITY = 100;
 // 缓存 key
 export const TRADING_KEY = 'trading_stocks';
+// 缓存 key
+export const TRADING_HISTORY_KEY = 'trading_history';
 
 // 舍去保留2位小数
 export const round = (num: number) => Math.round(num * 100) / 100;
 
 // 计算费用
-export const calculateFee = (stock: Stock.TradingParams) => {
+export const calculateFee = (stock: Stock.Info) => {
   // 股票总价
   const totalCost = stock.quantity * stock.price;
   // 券商佣金
@@ -33,34 +35,41 @@ export const calculateFee = (stock: Stock.TradingParams) => {
 };
 
 // 计算成本
-export const calculateCost = (stock: Stock.TradingParams) => {
+export const calculateCost = (stock: Stock.Info) => {
   // 股票总价
   const totalCost = stock.quantity * stock.price + calculateFee(stock);
   return round(totalCost);
 };
 
+// 计算股票价格
+export const calculatePrice = (stock: Stock.Info) => {
+  // 股票总价
+  const totalCost = calculateCost(stock);
+  // 股票总数量
+  const totalQuantity = stock.quantity;
+  // 计算股票价格
+  return round(totalCost / totalQuantity);
+};
+
 // 计算盈亏
-export const calculateProfit = (stock: Stock.TradingParams) => {
+export const calculateProfit = (stock: Stock.Info, currentPrice: number) => {
   // 股票总成本
   const totalCost = calculateCost(stock);
   // 股票现值
-  const currentPrice = stock.currentPrice * stock.quantity;
+  const totalPrice = currentPrice * stock.quantity;
   // 计算盈亏
-  return round(currentPrice - totalCost);
+  return round(totalPrice - totalCost);
 };
 
 // 计算盈亏率
-export const calculateProfitRate = (stock: Stock.TradingParams) => {
-  // 股票盈亏
-  const profit = calculateProfit(stock);
-  // 股票总成本
-  const totalCost = calculateCost(stock);
+export const calculateProfitRate = (stock: Stock.Info) => {
+  console.log(stock);
   // 计算盈亏率
-  return round(profit / totalCost);
+  // return round(profit / totalCost) * 100;
 };
 
 // 计算股票均价
-export const calculateAveragePrice = (stock: Stock.TradingParams) => {
+export const calculateAveragePrice = (stock: Stock.Info) => {
   // 股票总价
   const totalCost = calculateCost(stock);
   // 股票总数量
@@ -71,26 +80,30 @@ export const calculateAveragePrice = (stock: Stock.TradingParams) => {
 
 // 合并股票
 export const mergeStock = (
-  stock1: Stock.TradingParams,
-  stock2: Stock.TradingParams
-) => {
-  // 合并总股数
-  const totalQuantity =
-    stock1.quantity + (stock2.isBuy ? stock2.quantity : -stock2.quantity);
-  // stock1的总价
-  const totalCost1 = stock1.quantity * stock1.price;
-  // stock2的总价
-  const totalCost2 = calculateCost(stock2);
-  // 合并总价
-  const totalCost = totalCost1 + stock2.isBuy ? totalCost2 : -totalCost2;
+  stock: Stock.Info,
+  currentStock?: Stock.Info
+): Stock.Info => {
+  // 如果先前没有股票
+  if (!currentStock) {
+    return {
+      ...stock,
+      quantity: stock.quantity,
+      price: calculatePrice(stock),
+    };
+  }
+
+  return {
+    // 股票代码
+    ...stock,
+  };
 };
 
 // 转入资金
-export const transferInFund = (stock: Stock.TradingParams) => {
+export const transferInFund = (stock: Stock.Info) => {
   console.log(stock);
 };
 // 转出资金
-export const transferOutFund = (stock: Stock.TradingParams) => {
+export const transferOutFund = (stock: Stock.Info) => {
   console.log(stock);
 };
 // 查询股票
@@ -100,4 +113,12 @@ export const queryStocks = async () => {
 
 export const updateStocks = async (stocks: Stock.Info[]) => {
   store.set(TRADING_KEY, stocks);
+};
+
+export const queryStocksHistory = async () => {
+  return store.get(TRADING_HISTORY_KEY);
+};
+
+export const updateStocksHistory = async (stocks: Stock.Info[]) => {
+  store.set(TRADING_HISTORY_KEY, stocks);
 };
