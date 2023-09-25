@@ -21,4 +21,9 @@ declare namespace Stock {
     // 盈亏率
     profitRate: number;
   };
+
+  // 股票交易参数
+  export type TradingParams = Stock & {
+    isBuy: boolean;
+  };
 }

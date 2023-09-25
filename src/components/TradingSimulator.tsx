@@ -1,83 +1,46 @@
 import {
   ModalForm,
   ProColumnType,
+  ProFormDigit,
+  ProFormSwitch,
   ProFormText,
   ProTable,
 } from '@ant-design/pro-components';
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  InputNumber,
-  Row,
-  Space,
-  Statistic,
-} from 'antd';
+import { Button, Card, Col, Form, Row, Space, Statistic } from 'antd';
 import { useState } from 'react';
-
-// 交易费率
-const TRADING_FEE = 0.0003;
-// 印花税
-const STAMP_TAX = 0.001;
-// 最低交易费用
-const MIN_TRADING_FEE = 5;
-// 最小交易股数
-const MIN_TRADING_QUANTITY = 100;
-
-export const TradingForm = () => {
-  return (
-    <Card title='交易'>
-      <Form layout='vertical'>
-        <Form.Item label='股票信息'>
-          <Input readOnly></Input>
-        </Form.Item>
-        <Form.Item label='买入/卖出'>
-          <Input></Input>
-        </Form.Item>
-        <Form.Item label='金额'>
-          <InputNumber></InputNumber>
-        </Form.Item>
-        <Form.Item label='股数'>
-          <InputNumber
-            min={MIN_TRADING_QUANTITY}
-            step={MIN_TRADING_QUANTITY}
-            defaultValue={MIN_TRADING_QUANTITY}
-          ></InputNumber>
-        </Form.Item>
-        <Form.Item>
-          <Button>提交</Button>
-        </Form.Item>
-      </Form>
-    </Card>
-  );
-};
+import { useStock } from '../hooks/useTrading';
+import { MIN_TRADING_QUANTITY } from '../model/Trading';
 
 export const TradingSimulator = () => {
   // 股票列表
-  const [stockList, setStockList] = useState<Stock.Info[]>([
-    {
-      name: '腾讯控股',
-      code: '00700',
-      quantity: 100,
-      cost: 100,
-      currentPrice: 100,
-      profit: 100,
-      profitRate: 100,
-      price: 100,
-    },
-  ]);
+  const { stocks, modifyStock } = useStock();
+  // 股票买卖模态框
+  const [buyVisible, setBuyVisible] = useState(false);
+  // 股票买卖form数据
+  const [buyForm] = Form.useForm();
 
-  // 股票模态框
-  const [stockVisible, setStockVisible] = useState(false);
+  // 购买股票按钮点击
+  const buyStockHandler = (stock: Stock.Info) => {
+    setBuyVisible(true);
+    buyForm.setFieldsValue({
+      ...stock,
+      isBuy: true,
+    });
+  };
+  // 卖出股票按钮点击
+  const sellStockHandler = (stock: Stock.Info) => {
+    buyForm.setFieldsValue({
+      ...stock,
+      isBuy: false,
+    });
+  };
 
   const columns: ProColumnType<Stock.Info>[] = [
     {
       title: '股票名称',
       dataIndex: 'name',
       key: 'name',
-      render: (text, record) => {
+      render: (_, record) => {
         return (
           <Space direction='vertical'>
             <b>{record.name}</b>
@@ -95,7 +58,7 @@ export const TradingSimulator = () => {
       title: '成本价/当前价',
       dataIndex: 'costPrice',
       key: 'costPrice',
-      render: (text, record) => {
+      render: (_, record) => {
         return (
           <Space direction='vertical'>
             <span>{record.cost}</span>
@@ -118,11 +81,18 @@ export const TradingSimulator = () => {
       title: '操作',
       dataIndex: 'operation',
       key: 'operation',
-      render: (text, record) => {
+      render: (_, record) => {
         return (
           <Space>
-            <Button type='primary'>Buy</Button>
-            <Button danger>Sell</Button>
+            <Button
+              type='primary'
+              onClick={() => buyStockHandler({ ...record })}
+            >
+              Buy
+            </Button>
+            <Button danger onClick={() => sellStockHandler({ ...record })}>
+              Sell
+            </Button>
           </Space>
         );
       },
@@ -173,24 +143,61 @@ export const TradingSimulator = () => {
             <Button
               type='primary'
               onClick={() => {
-                setStockVisible(true);
+                buyStockHandler({
+                  name: '腾讯控股',
+                  code: '00700',
+                  cost: 0,
+                  currentPrice: 0,
+                  profit: 0,
+                  profitRate: 0,
+                  price: 0,
+                  quantity: 0,
+                });
               }}
             >
               Add Stock
             </Button>,
           ]}
-          dataSource={stockList}
+          dataSource={stocks}
           columns={columns}
         ></ProTable>
         <ModalForm
-          open={stockVisible}
-          onOpenChange={setStockVisible}
-          title='Stock info'
+          open={buyVisible}
+          onOpenChange={setBuyVisible}
+          title='Buy Stock'
+          form={buyForm}
+          onFinish={async (values) => {
+            await modifyStock(values);
+            setBuyVisible(false);
+          }}
         >
-          <ProFormText label='股票代码'></ProFormText>
-          <ProFormText label='股票名称'></ProFormText>
-          <ProFormText label='股票数量'></ProFormText>
-          <ProFormText label='股票价格'></ProFormText>
+          <ProFormText label='股票代码' name='code' readonly></ProFormText>
+          <ProFormText label='股票名称' name={'name'} readonly></ProFormText>
+          <ProFormSwitch
+            label='买入/卖出'
+            name='isBuy'
+            initialValue={true}
+            fieldProps={{
+              checkedChildren: '买入',
+              unCheckedChildren: '卖出',
+            }}
+          ></ProFormSwitch>
+          <ProFormDigit
+            label='股票价格'
+            name={'price'}
+            fieldProps={{
+              min: 0,
+            }}
+          ></ProFormDigit>
+          <ProFormDigit
+            label='股数'
+            name={'quantity'}
+            initialValue={MIN_TRADING_QUANTITY}
+            fieldProps={{
+              step: MIN_TRADING_QUANTITY,
+              min: MIN_TRADING_QUANTITY,
+            }}
+          ></ProFormDigit>
         </ModalForm>
       </Space>
     </div>

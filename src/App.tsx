@@ -4,6 +4,7 @@ import { TradingSimulator } from './components/TradingSimulator';
 
 // Create a client
 const queryClient = new QueryClient();
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
