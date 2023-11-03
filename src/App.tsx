@@ -4,8 +4,18 @@ import classNames from 'classnames';
 import copy from 'copy-to-clipboard';
 import ky from 'ky';
 import { pinyin } from 'pinyin-pro';
-import { FC, useState } from 'react';
+import {
+  FC,
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { Toaster, toast } from 'sonner';
+
+const BASE_URL = 'https://ims-api.dctxf.com';
+// const BASE_URL = 'http://127.0.0.1:3000';
 
 export type PoetryResult = {
   id: string;
@@ -32,7 +42,7 @@ const filterNull = (arr: (string | null | undefined)[]) => {
 const queryPoetry = async () => {
   // 跨域
   const res = await ky
-    .get('https://ims-api.dctxf.com/poetry/random', {
+    .get(`${BASE_URL}/poetry/random`, {
       mode: 'cors',
     })
     .json();
@@ -105,9 +115,64 @@ export const Button: FC<ButtonProps> = ({
   );
 };
 
+export type AudioPlayerProps = {
+  //
+  onPlay?: () => void;
+  onEnd?: () => void;
+};
+export type AudioPlayerRef = {
+  play: (text?: string) => void;
+};
+
+const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(
+  ({ onPlay = () => {}, onEnd = () => {} }, ref) => {
+    const textRef = useRef<string>('');
+    const audioRef = useRef<HTMLAudioElement>(new Audio());
+
+    useEffect(() => {
+      if (audioRef.current) {
+        audioRef.current.addEventListener('play', onPlay);
+        audioRef.current.addEventListener('ended', onEnd);
+      }
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.removeEventListener('play', onPlay);
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          audioRef.current.removeEventListener('ended', onEnd);
+        }
+      };
+    }, [onEnd, onPlay]);
+
+    useImperativeHandle(
+      ref,
+      () => {
+        return {
+          play(text) {
+            const audio = audioRef.current;
+            if (!text) return;
+            if (textRef.current === text) {
+              audio.currentTime = 0;
+              audio.play();
+              return;
+            }
+            textRef.current = text;
+            audio.src = `${BASE_URL}/ms/tts?text=${text}`;
+            audio.play();
+          },
+        };
+      },
+      []
+    );
+    return null;
+  }
+);
+
 function App() {
   const { data, refresh, loading } = useRequest(queryPoetry, {});
   const [hasPinyin, setHasPinyin] = useState(false);
+  const [playing, setPlaying] = useState(false);
+
+  const playerRef = useRef<AudioPlayerRef>(null);
 
   return (
     <div className='p-2 bg-slate-50 min-h-screen text-center'>
@@ -117,6 +182,14 @@ function App() {
           onClick={refresh}
           icon={<Icon icon='solar:refresh-square-outline' />}
           label='换一首'
+        ></Button>
+        <Button
+          onClick={() => {
+            playerRef.current?.play((data?.paragraphs).join('\n'));
+          }}
+          icon={<Icon icon='fluent:immersive-reader-16-regular' />}
+          label='朗读'
+          active={playing}
         ></Button>
         <Button
           active={hasPinyin}
@@ -142,6 +215,13 @@ function App() {
             });
           }}
         ></Button>
+      </div>
+      <div className='flex justify-center mb-2'>
+        <AudioPlayer
+          ref={playerRef}
+          onPlay={() => setPlaying(true)}
+          onEnd={() => setPlaying(false)}
+        />
       </div>
       <div className='flex justify-center w-120 h-40 mb-2'>
         {!loading && (
