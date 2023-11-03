@@ -185,7 +185,9 @@ function App() {
         ></Button>
         <Button
           onClick={() => {
-            playerRef.current?.play((data?.paragraphs).join('\n'));
+            if (data?.paragraphs) {
+              playerRef.current?.play(data?.paragraphs!.join('\n'));
+            }
           }}
           icon={<Icon icon='fluent:immersive-reader-16-regular' />}
           label='朗读'
