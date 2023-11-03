@@ -106,13 +106,13 @@ export const Button: FC<ButtonProps> = ({
 };
 
 function App() {
-  const { data, refresh } = useRequest(queryPoetry, {});
+  const { data, refresh, loading } = useRequest(queryPoetry, {});
   const [hasPinyin, setHasPinyin] = useState(false);
 
   return (
-    <div className='p-2 bg-slate-50 min-h-screen'>
+    <div className='p-2 bg-slate-50 min-h-screen text-center'>
       <Toaster />
-      <div className='flex items-center pb-4'>
+      <div className='flex items-center justify-center pb-4'>
         <Button
           active={hasPinyin}
           onClick={() => {
@@ -143,39 +143,40 @@ function App() {
           }}
         ></Button>
       </div>
-      <FontPinyin
-        fonts={filterNull([data?.source, data?.chapter]).join(' ')}
-        hasPinyin={false}
-        className='p-2'
-      ></FontPinyin>
-      <FontPinyin
-        fonts={data?.title}
-        hasPinyin={hasPinyin}
-        className='text-3xl font-bold pb-4'
-      ></FontPinyin>
-      <h2 className='pb-2'>
+      <div className={classNames(loading && 'animate-pulse')}>
         <FontPinyin
-          fonts={filterNull([data?.dynasty, data?.author]).join('-')}
-          hasPinyin={hasPinyin}
-          className='text-xl font-bold'
+          fonts={filterNull([data?.source, data?.chapter]).join(' ')}
+          hasPinyin={false}
         ></FontPinyin>
-      </h2>
+        <FontPinyin
+          fonts={data?.title}
+          hasPinyin={hasPinyin}
+          className='text-3xl font-bold pb-4'
+        ></FontPinyin>
+        <h2 className='p-2'>
+          <FontPinyin
+            fonts={filterNull([data?.dynasty, data?.author]).join('-')}
+            hasPinyin={hasPinyin}
+            className='text-xl font-bold'
+          ></FontPinyin>
+        </h2>
 
-      <ul className='list-none leading-6'>
-        {data?.paragraphs
-          .join('')
-          .split(/，|。/)
-          .map((i) => {
-            return (
-              <FontPinyin
-                fonts={i}
-                hasPinyin={hasPinyin}
-                key={i}
-                className='list-none'
-              ></FontPinyin>
-            );
-          })}
-      </ul>
+        <ul className='list-none leading-6'>
+          {data?.paragraphs
+            .join('')
+            .split(/，|。/)
+            .map((i) => {
+              return (
+                <FontPinyin
+                  fonts={i}
+                  hasPinyin={hasPinyin}
+                  key={i}
+                  className='list-none'
+                ></FontPinyin>
+              );
+            })}
+        </ul>
+      </div>
     </div>
   );
 }
