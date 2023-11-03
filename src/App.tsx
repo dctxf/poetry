@@ -114,17 +114,17 @@ function App() {
       <Toaster />
       <div className='flex items-center justify-center pb-4'>
         <Button
+          onClick={refresh}
+          icon={<Icon icon='solar:refresh-square-outline' />}
+          label='换一首'
+        ></Button>
+        <Button
           active={hasPinyin}
           onClick={() => {
             setHasPinyin(!hasPinyin);
           }}
           icon={<Icon icon='material-symbols:language-pinyin-rounded' />}
           label='拼音'
-        ></Button>
-        <Button
-          onClick={refresh}
-          icon={<Icon icon='solar:refresh-square-outline' />}
-          label='换一首'
         ></Button>
         <Button
           icon={<Icon icon='material-symbols:content-copy-outline' />}
@@ -143,6 +143,15 @@ function App() {
           }}
         ></Button>
       </div>
+      <div className='flex justify-center w-120 h-40 mb-2'>
+        {!loading && (
+          <img
+            src='https://unsplash.it/400/200?random'
+            alt=''
+            className='w-120 h-40 object-cover bg-slate-200'
+          />
+        )}
+      </div>
       <div className={classNames(loading && 'animate-pulse')}>
         <FontPinyin
           fonts={filterNull([data?.source, data?.chapter]).join(' ')}
@@ -151,7 +160,7 @@ function App() {
         <FontPinyin
           fonts={data?.title}
           hasPinyin={hasPinyin}
-          className='text-3xl font-bold pb-4'
+          className='text-2xl font-bold pb-4'
         ></FontPinyin>
         <h2 className='p-2'>
           <FontPinyin
